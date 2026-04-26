@@ -1,20 +1,21 @@
 import argparse
-import dagshub
+import os
 import mlflow
 import mlflow.sklearn
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import (accuracy_score, precision_score,
-                             recall_score, f1_score, confusion_matrix)
+from sklearn.metrics import (accuracy_score, precision_score, recall_score, f1_score, confusion_matrix)
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--n_estimators", type=int, default=100)
 parser.add_argument("--random_state", type=int, default=42)
 args = parser.parse_args()
 
-dagshub.init(repo_owner='231130651', repo_name='Eksperimen_SML_Michelle-Anditio', mlflow=True)
+os.environ['MLFLOW_TRACKING_URI'] = 'https://dagshub.com/231130651/Eksperimen_SML_Michelle-Anditio.mlflow'
+os.environ['MLFLOW_TRACKING_USERNAME'] = '231130651'
+os.environ['MLFLOW_TRACKING_PASSWORD'] = os.environ.get('DAGSHUB_TOKEN', '')
 
 train_df = pd.read_csv('credit_risk_preprocessing/credit_risk_train.csv')
 test_df = pd.read_csv('credit_risk_preprocessing/credit_risk_test.csv')
