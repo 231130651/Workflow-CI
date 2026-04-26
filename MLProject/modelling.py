@@ -63,5 +63,9 @@ with mlflow.start_run():
     plt.close()
     mlflow.log_artifact('feature_importance.png')
 
-    mlflow.sklearn.log_model(model, "random_forest_model")
+    mlflow.sklearn.log_model(model, "random_forest_model", registered_model_name="random_forest_model" )
+    run_id = mlflow.active_run().info.run_id
+    with open('run_id.txt', 'w') as f:
+        f.write(run_id)
+    
     print("Training selesai!")
