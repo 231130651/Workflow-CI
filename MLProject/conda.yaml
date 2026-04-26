@@ -1,0 +1,15 @@
+name: credit_risk_env
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python=3.10
+  - pip
+  - pip:
+    - mlflow==2.12.1
+    - scikit-learn==1.4.2
+    - pandas==2.2.2
+    - numpy==1.26.4
+    - matplotlib==3.8.4
+    - seaborn==0.13.2
+    - dagshub==0.3.36

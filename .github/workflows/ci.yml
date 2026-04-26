@@ -1,0 +1,50 @@
+name: CI - Credit Risk Model Training
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  train:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install MLflow and dependencies
+        run: |
+          pip install mlflow==2.12.1 dagshub==0.3.36 scikit-learn==1.4.2 pandas==2.2.2 numpy==1.26.4 matplotlib==3.8.4 seaborn==0.13.2
+
+      - name: Train model
+        env:
+          DAGSHUB_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
+          MLFLOW_TRACKING_USERNAME: ${{ secrets.DAGSHUB_TOKEN }}
+          MLFLOW_TRACKING_PASSWORD: ${{ secrets.DAGSHUB_TOKEN }}
+        run: |
+          cd MLProject
+          python modelling.py
+
+      - name: Save model artifact to repo
+        run: |
+          git config --global user.email "actions@github.com"
+          git config --global user.name "GitHub Actions"
+          git add -f MLProject/confusion_matrix.png MLProject/feature_importance.png || true
+          git commit -m "Add training artifacts [skip ci]" || true
+          git push
+
+      - name: Build Docker Image
+        run: |
+          mlflow models build-docker -m "models:/random_forest_model/latest" -n "${{ secrets.DOCKERHUB_USERNAME }}/credit-risk-model" --enable-mlserver
+
+      - name: Push Docker Image to Docker Hub
+        run: |
+          echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/credit-risk-model
