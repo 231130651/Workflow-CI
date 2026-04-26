@@ -22,20 +22,39 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Install MLflow and dependencies
+      - name: Check Env
+        run: |
+          python --version
+          pip --version
+          docker --version
+
+      - name: Install dependencies
         run: |
           pip install mlflow==2.12.1 dagshub==0.3.36 scikit-learn==1.4.2 pandas==2.2.2 numpy==1.26.4 matplotlib==3.8.4 seaborn==0.13.2
 
-      - name: Train model
+      - name: Run mlflow project
         env:
           DAGSHUB_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
           MLFLOW_TRACKING_USERNAME: "231130651"
           MLFLOW_TRACKING_PASSWORD: ${{ secrets.DAGSHUB_TOKEN }}
+          MLFLOW_TRACKING_URI: https://dagshub.com/231130651/Eksperimen_SML_Michelle-Anditio.mlflow
         run: |
           cd MLProject
-          python modelling.py
+          mlflow run . --env-manager=local
 
-      - name: Save model artifact to repo
+      - name: Get latest MLflow run_id
+        env:
+          MLFLOW_TRACKING_URI: https://dagshub.com/231130651/Eksperimen_SML_Michelle-Anditio.mlflow
+          MLFLOW_TRACKING_USERNAME: "231130651"
+          MLFLOW_TRACKING_PASSWORD: ${{ secrets.DAGSHUB_TOKEN }}
+        run: |
+          echo "RUN_ID=$(cat MLProject/run_id.txt)" >> $GITHUB_ENV
+
+      - name: Install Python dependencies
+        run: |
+          pip install requests
+
+      - name: Upload to GitHub
         run: |
           git config --global user.email "actions@github.com"
           git config --global user.name "GitHub Actions"
@@ -52,7 +71,7 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and Push Docker Image
+      - name: Build Docker Model
         env:
           MLFLOW_TRACKING_URI: https://dagshub.com/231130651/Eksperimen_SML_Michelle-Anditio.mlflow
           MLFLOW_TRACKING_USERNAME: "231130651"
@@ -60,6 +79,14 @@ jobs:
         run: |
           mlflow models build-docker \
             --model-uri "runs:/$(cat MLProject/run_id.txt)/random_forest_model" \
-            --name "${{ secrets.DOCKERHUB_USERNAME }}/credit-risk-model" \
+            --name "credit-risk-model" \
             --env-manager local
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/credit-risk-model
+
+      - name: Tag Docker Image
+        run: |
+          docker tag credit-risk-model ${{ secrets.DOCKERHUB_USERNAME }}/credit-risk-model:latest
+
+      - name: Push Docker Image
+        run: |
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/credit-risk-model:latest
+```
