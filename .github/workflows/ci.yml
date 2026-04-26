@@ -60,5 +60,6 @@ jobs:
         run: |
           mlflow models build-docker \
             --model-uri "runs:/$(cat MLProject/run_id.txt)/random_forest_model" \
-            --name "${{ secrets.DOCKERHUB_USERNAME }}/credit-risk-model"
+            --name "${{ secrets.DOCKERHUB_USERNAME }}/credit-risk-model" \
+            --env-manager local
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/credit-risk-model
